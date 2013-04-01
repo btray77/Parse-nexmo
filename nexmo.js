@@ -119,6 +119,8 @@ function sendMessage(data, callback) {
 function getPath(action) {
 	return action + username + '/' + password;
 }
+
+
 Parse.Cloud.define("httpx", function(request, response) {
 	Parse.Cloud.httpRequest({
 		url: request.params.url,
@@ -148,26 +150,31 @@ Parse.Cloud.define("httpx", function(request, response) {
 	});
 });
 
-function sendRequest(path, method, callback) {
+
+function sendRequest(path, meth, callback) {
 	if (!initialized) {
 		throw 'nexmo not initialized, call nexmo.initialize(username, password) first before calling any nexmo API';
 	}
 	// Allows for only 2 paramiters to be passed if no method passed.
-	if (typeof method == 'function') {
-		callback = method;
-		method = 'GET';
+	if (typeof meth == 'function') {
+		callback = meth;
+		meth = 'GET';
 	}
 	var type = (useHttps) ? 'http://' : 'https://';
-	Parse.Cloud.run("httpx", {
+	Parse.Cloud.run("httpx", 
+	{//Request
 		url: type + 'rest.nexmo.com/' + path,
-		method: method,
+		method: meth,
 		headers: headers,
 		callback: callback
-	}, {
-		success: function(request) {
-			
+	}, 
+	{//Response 
+		success: function(httpResponse) {
+		console.log(httpResponse);
  		},
-		error: function(error) {}
+		error: function(httpResponse) {
+		console.log(httpResponse);
+		}
 	});
 }
 exports.checkBalance = function(callback) {

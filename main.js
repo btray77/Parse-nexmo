@@ -1,7 +1,7 @@
 Parse.initialize("", "");
 
 var nexmo = require('cloud/nexmo.js');
-nexmo.initialize('12341234', '12341324');
+nexmo.initialize('', '');
 
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
@@ -11,8 +11,8 @@ Parse.Cloud.define("hello", function(request, response) {
 
 
 var from = '123412341234';
-var to = '123412341234';
-nexmo.sendTextMessage(from, to, 'testing SMS sending Service!', consolelog);
+var to = '12343478572';
+//nexmo.sendTextMessage(from, to, 'testing SMS sending Service!', consolelog);
 //nexmo.sendMessage({'from':from ,to:<TO_NUMBER>,text:'testing'},consolelog);
 
 function consolelog(err, messageResponse) {
@@ -43,9 +43,7 @@ Parse.Cloud.define("searchNumbersA", function(request, response) {
 	//request.params.areacode  //303 
 	nexmo.searchNumbers('US',request.params.areacode , consolelog);
 });
-Parse.Cloud.define("checkBalance", function(request, response) {
-	nexmo.checkBalance(consolelog);
-});
+ 
 //nexmo.checkBalance(consolelog);
 //nexmo.getPricing('US',consolelog);
 //nexmo.getNumbers(consolelog);
