@@ -119,37 +119,23 @@ function sendMessage(data, callback) {
 function getPath(action) {
 	return action + username + '/' + password;
 }
-
-
 Parse.Cloud.define("httpx", function(request, response) {
 	Parse.Cloud.httpRequest({
 		url: request.params.url,
 		method: request.params.method,
-		headers: request.params.headers
-	}, {
-		success: function(httpResponse) {
-			response.success(httpResponse);
-			if (request.callback) {
-				var retJson = httpResponse.text;
-				var err = null;
-				try {
-					retJson = JSON.parse(httpResponse.text);
-				} catch (parsererr) {
-					// ignore parser error for now and send raw response to client
-					log(parsererr);
-					log('could not convert API response to JSON, above error is ignored and raw API response is returned to client');
-					err = parsererr;
-				}
-				request.callback(err, retJson);
-			}
-		},
+		headers: request.params.headers,
 		error: function(httpResponse) {
+			log('Error: ' + httpResponse);
 			response.error(httpResponse);
-			request.callback(httpResponse.status);
+			return response; //response.error("failed with code " + httpResponse.status);
+		},
+		success: function(httpResponse) {
+			log('Success: ' + httpResponse);
+			response.success(httpResponse);
+			return response;
 		}
 	});
 });
-
 
 function sendRequest(path, meth, callback) {
 	if (!initialized) {
@@ -161,25 +147,42 @@ function sendRequest(path, meth, callback) {
 		meth = 'GET';
 	}
 	var type = (useHttps) ? 'http://' : 'https://';
-	Parse.Cloud.run("httpx", 
-	{//Request
-		url: type + 'rest.nexmo.com/' + path,
+	Parse.Cloud.run('httpx', { //Request
+		url: type + 'rest.nexmo.com' + path,
 		method: meth,
 		headers: headers,
-		callback: callback
-	}, 
-	{//Response 
+		'callback': callback
+	}, {
 		success: function(httpResponse) {
-		console.log(httpResponse);
- 		},
+			log('HTTP Response' + httpResponse);
+			//response.success(httpResponse);
+			if (callback) {
+				var retJson = httpResponse.text;
+				var err = null;
+				try {
+					retJson = JSON.parse(httpResponse.text);
+				} catch (parsererr) {
+					// ignore parser error for now and send raw response to client
+					log(parsererr);
+					log('could not convert API response to JSON, above error is ignored and raw API response is returned to client');
+					err = parsererr;
+				}
+				log('Returned JSON: ' + retJson);
+				callback(err, retJson);
+			}
+		},
 		error: function(httpResponse) {
-		console.log(httpResponse);
+			log('HTTP Response' + httpResponse);
+			log('There Was An Error');
+			callback(httpResponse.status);
 		}
 	});
 }
 exports.checkBalance = function(callback) {
 	var balancePath = getPath('/account/get-balance/');
+	log('About to Request checkBalance');
 	sendRequest(balancePath, callback);
+	log('Finished Request For checkBalance');
 };
 exports.getPricing = function(countryCode, callback) {
 	if (!countryCode || countryCode.length != 2) {
@@ -243,20 +246,18 @@ exports.changeDrCallbackUrl = function(newSecret, callback) {
 function sendError(callback, err, returnData) {
 	// Throw the error in case if there is no callback passed
 	if (callback) {
+		log('Callback sendError');
 		callback(err, returnData);
 	} else {
+		log('Throwing an Err');
 		throw err;
 	}
 }
 //Logging in one place to make it east to move to logging library like winston later.
 
 function log(logMsg) {
-	if (logMsg instanceof Error) console.log(logMsg.stack);
-	if (debugOn) {
-		if (typeof logMsg == 'object') {
-			console.dir(logMsg);
-		} else {
-			console.log(logMsg);
-		}
-	}
+	if (logMsg instanceof Error) { 
+		console.log('Instanceof Error: ');
+	 console.log(logMsg.stack);}
+	console.log(logMsg);
 }
